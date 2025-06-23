@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gloopi Token Scanner</title>
+</head>
+<body style="font-family: sans-serif; background: #0a0a0a; color: #fff; text-align: center; padding: 40px;">
+  <h1>🪐 Gloopi Token Scanner</h1>
+  <input id="address" placeholder="Enter Token Address" style="width: 80%; padding: 12px; font-size: 16px;" />
+  <button onclick="fetchTokenInfo()" style="padding: 12px 20px; margin-left: 10px;">Scan</button>
+
+  <div id="result" style="margin-top: 40px; font-size: 18px;"></div>
+
+  <script>
+    async function fetchTokenInfo() {
+      const address = document.getElementById('address').value.trim();
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = "🔍 Scanning...";
+      
+      try {
+        const res = await fetch(`https://api.dexscreener.com/latest/dex/pairs/ethereum/${address}`);
+        const data = await res.json();
+
+        if (!data || !data.pair) {
+          resultDiv.innerHTML = "❌ Token not found or unsupported.";
+          return;
+        }
+
+        const { pair } = data;
+        resultDiv.innerHTML = `
+          <p><strong>Token:</strong> ${pair.baseToken.name} (${pair.baseToken.symbol})</p>
+          <p><strong>Price:</strong> $${parseFloat(pair.priceUsd).toFixed(6)}</p>
+          <p><strong>FDV:</strong> $${Number(pair.fdv).toLocaleString()}</p>
+          <p><strong>Liquidity:</strong> $${Number(pair.liquidity.usd).toLocaleString()}</p>
+        `;
+      } catch (err) {
+        resultDiv.innerHTML = "⚠️ Error fetching token data.";
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>
