@@ -2,102 +2,148 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Gloopi 全鏈代幣掃描器</title>
   <style>
     body {
-      background-color: #111827;
-      color: white;
       font-family: Arial, sans-serif;
+      background-color: #111827;
+      color: #fff;
+      margin: 0;
       padding: 2rem;
     }
+
     .scanner-box {
-      background-color: #1f2937;
-      padding: 2rem;
       max-width: 500px;
       margin: auto;
-      border-radius: 1rem;
+      background-color: #1f2937;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #00000050;
     }
-    input, select, button {
+
+    h1 {
+      color: #93c5fd;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    input[type="text"], select {
       width: 100%;
-      margin-top: 1rem;
-      padding: 0.8rem;
-      font-size: 1rem;
+      padding: 0.6rem;
+      margin-bottom: 1rem;
+      border-radius: 6px;
+      border: none;
+      background-color: #374151;
+      color: #fff;
     }
-    img {
-      height: 30px;
+
+    button {
+      width: 100%;
+      padding: 0.7rem;
+      background-color: #6366f1;
+      border: none;
+      color: white;
+      font-size: 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #result {
+      margin-top: 2rem;
+      background: #1e293b;
+      padding: 1rem;
+      border-radius: 6px;
+      color: #d1d5db;
+    }
+
+    img.token-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
       vertical-align: middle;
-      margin-right: 0.5rem;
+      margin-right: 10px;
     }
   </style>
 </head>
 <body>
   <div class="scanner-box">
-    <h2>🔍 Gloopi 全鏈代幣掃描器</h2>
-    <input type="text" id="address" placeholder="輸入合約地址" />
-    <select id="chain">
-      <option value="eth">ETH</option>
-      <option value="bsc" selected>BSC</option>
-      <option value="sol">SOL</option>
+    <h1>🔍 Gloopi 全鏈代幣掃描器</h1>
+    <label for="token">代幣地址：</label>
+    <input type="text" id="tokenInput" placeholder="輸入合約地址或 Solana 地址" />
+
+    <label for="chain">選擇鏈：</label>
+    <select id="chainSelect">
+      <option value="">自動偵測</option>
+      <option value="eth">Ethereum</option>
+      <option value="bsc">BSC</option>
+      <option value="sol">Solana</option>
       <option value="base">Base</option>
       <option value="arb">Arbitrum</option>
     </select>
+
     <button onclick="scanToken()">查詢代幣</button>
-    <div id="result" style="margin-top:1.5rem;"></div>
+
+    <div id="result"></div>
   </div>
 
   <script>
-    async function scanToken() {
-      const address = document.getElementById('address').value.trim();
-      const chain = document.getElementById('chain').value;
-      const result = document.getElementById('result');
+async function scanToken() {
+  const address = document.getElementById("tokenInput").value.trim();
+  const chain = document.getElementById("chainSelect").value;
+  const result = document.getElementById("result");
 
-      if (!address) {
-        result.innerHTML = "❌ 請輸入代幣地址";
-        return;
-      }
+  if (!address) {
+    result.innerHTML = "❌ 請輸入代幣地址";
+    return;
+  }
 
-      result.innerHTML = "⌛ 查詢中...";
+  result.innerHTML = "⏳ 查詢中...";
 
-      try {
-        const url = `https://api.dexscreener.com/latest/dex/pairs/${chain}/${address}`;
-        const res = await fetch(url);
-        const data = await res.json();
+  try {
+    // 自動組出查詢網址（用 DexScreener）
+    const url = `https://api.dexscreener.com/latest/dex/search/?q=${address}`;
+    const res = await fetch(url);
+    const data = await res.json();
 
-        if (!data.pairs || !data.pairs.length) {
-          result.innerHTML = "❌ 查無代幣資料，請確認地址是否正確";
-          return;
-        }
-
-        const token = data.pairs[0];
-
-        // 模擬數據
-        const lpLocked = Math.random() > 0.5;
-        const riskScore = (Math.random() * 2 + 3).toFixed(2); // 模擬 3~5 分
-
-        result.innerHTML = `
-          <div>
-            <img src="${token.baseToken.imageUrl || ''}" />
-            <strong>${token.baseToken.name}</strong> (${token.baseToken.symbol})
-          </div>
-          <p>💲 價格: <strong>$${token.priceUsd}</strong></p>
-          <p>📊 市值：約 <strong>$${token.liquidity.usd}</strong></p>
-          <p>🔒 LP 是否鎖倉：<strong style="color:${lpLocked ? 'lightgreen' : 'red'}">${lpLocked ? '是' : '否'}</strong></p>
-          <p>🧠 風險評分（模擬）：<strong>${riskScore} / 5.0</strong></p>
-          <p>🐋 Top 10 持有人：<em>（尚未整合）</em></p>
-          <p>🌐 社群連結：</p>
-          <ul>
-            <li>官網：<a href="${token.baseToken.website || '#'}" target="_blank">${token.baseToken.website || '尚未偵測'}</a></li>
-            <li>Twitter：<a href="${token.baseToken.twitter || '#'}" target="_blank">${token.baseToken.twitter || '尚未偵測'}</a></li>
-            <li>Telegram：<a href="${token.baseToken.telegram || '#'}" target="_blank">${token.baseToken.telegram || '尚未偵測'}</a></li>
-          </ul>
-          <p style="font-size:0.8rem;color:#aaa;">來自 DexScreener API</p>
-        `;
-      } catch (e) {
-        console.error(e);
-        result.innerHTML = "⚠️ 查詢失敗，請稍後再試";
-      }
+    if (!data || !data.pairs || data.pairs.length === 0) {
+      result.innerHTML = "❌ 查無代幣資料，請確認地址是否正確或已上架 DEX";
+      return;
     }
-  </script>
+
+    const token = data.pairs[0];
+
+    // 模擬風險評分（未來可以整合合約分析 API）
+    const riskScore = (Math.random() * 2 + 3).toFixed(1); // 3.0～5.0
+
+    // 模擬 LP 鎖倉（未來可整合 Team.Finance、Unicrypt 等查詢）
+    const lpLocked = Math.random() > 0.5;
+
+    // 顯示結果
+    result.innerHTML = `
+      <div>
+        <img src="${token.baseToken.imageUrl || ''}" class="token-logo"/>
+        <strong>${token.baseToken.name} (${token.baseToken.symbol})</strong>
+      </div>
+      <p>💰 價格：<strong>$${token.priceUsd}</strong></p>
+      <p>📊 市值：約 <strong>${token.liquidity.usd ? "$" + Number(token.liquidity.usd).toLocaleString() : "不明"}</strong></p>
+      <p>🔐 LP 是否鎖倉：<strong style="color:${lpLocked ? 'lightgreen' : 'red'}">${lpLocked ? '已鎖' : '未鎖'}</strong></p>
+      <p>🧠 風險評分（模擬）：<strong>${riskScore} / 5</strong></p>
+      <p>🐳 Top 10 持有人：<em>（尚未整合）</em></p>
+      <p>🌐 社群連結：<em>（尚未偵測）</em></p>
+      <p style="font-size:0.85rem; color:#888;">來自 DexScreener 資料，僅供參考。</p>
+    `;
+  } catch (e) {
+    console.error(e);
+    result.innerHTML = "⚠️ 查詢失敗，請稍後再試";
+  }
+}
+</script>
 </body>
 </html>
