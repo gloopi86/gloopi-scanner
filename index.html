@@ -2,72 +2,108 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>Gloopi Token Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gloopi 全鏈代幣掃描器</title>
   <style>
-    body { font-family: Arial; padding: 20px; }
-    input { width: 320px; padding: 5px; font-size: 16px; }
-    button { padding: 6px 12px; font-size: 16px; }
-    #result { margin-top: 20px; white-space: pre-wrap; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #111827;
+      color: #fff;
+      margin: 0;
+      padding: 2rem;
+    }
+
+    .scanner-box {
+      max-width: 500px;
+      margin: auto;
+      background-color: #1f2937;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #00000050;
+    }
+
+    h1 {
+      color: #93c5fd;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    input[type="text"], select {
+      width: 100%;
+      padding: 0.6rem;
+      margin-bottom: 1rem;
+      border-radius: 6px;
+      border: none;
+      background-color: #374151;
+      color: #fff;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.7rem;
+      background-color: #6366f1;
+      border: none;
+      color: white;
+      font-size: 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #result {
+      margin-top: 2rem;
+      background: #1e293b;
+      padding: 1rem;
+      border-radius: 6px;
+      color: #d1d5db;
+    }
+
+    img.token-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      vertical-align: middle;
+      margin-right: 10px;
+    }
   </style>
 </head>
 <body>
-  <h2>Gloopi 全鏈代幣掃描器</h2>
-  <input type="text" id="address" placeholder="輸入代幣合約地址或 Solana 地址" />
-  <button onclick="scanToken()">查詢</button>
-  <div id="result"></div>
+  <div class="scanner-box">
+    <h1>🔍 Gloopi 全鏈代幣掃描器</h1>
+    <label for="token">代幣地址：</label>
+    <input type="text" id="tokenInput" placeholder="輸入合約地址或 Solana 地址" />
+
+    <label for="chain">選擇鏈：</label>
+    <select id="chainSelect">
+      <option value="">自動偵測</option>
+      <option value="eth">Ethereum</option>
+      <option value="bsc">BSC</option>
+      <option value="sol">Solana</option>
+      <option value="base">Base</option>
+      <option value="arb">Arbitrum</option>
+    </select>
+
+    <button onclick="scanToken()">查詢代幣</button>
+
+    <div id="result"></div>
+  </div>
 
   <script>
     async function scanToken() {
-      const address = document.getElementById('address').value.trim();
-      const resultDiv = document.getElementById('result');
-      resultDiv.innerHTML = '查詢中...';
+      const address = document.getElementById("tokenInput").value.trim();
+      const chain = document.getElementById("chainSelect").value;
+      const result = document.getElementById("result");
+      result.innerHTML = "⏳ 查詢中...";
 
-      // 嘗試使用 Dexscreener API 查詢（EVM鏈）
-      try {
-        const dexUrl = `https://api.dexscreener.com/latest/dex/tokens/${address}`;
-        const dexRes = await fetch(dexUrl);
-        const dexData = await dexRes.json();
-
-        if (dexData.pairs && dexData.pairs.length > 0) {
-          const pair = dexData.pairs[0];
-          const info = `
-鏈別：${pair.chainId}
-代幣名稱：${pair.baseToken.name} (${pair.baseToken.symbol})
-價格：$${pair.priceUsd}
-市值：$${pair.fdv ? pair.fdv.toLocaleString() : '未知'}
-持有流動性池：${pair.liquidity.usd.toLocaleString()} USD
-來源：Dexscreener`;
-          resultDiv.innerHTML = info;
-          return;
-        }
-      } catch (err) {
-        console.error('Dexscreener查詢失敗', err);
-      }
-
-      // 嘗試查 Solana（一般為44字元地址）
-      if (address.length === 44) {
-        try {
-          const solUrl = `https://public-api.solscan.io/token/meta?tokenAddress=${address}`;
-          const solRes = await fetch(solUrl, { headers: { 'accept': 'application/json' }});
-          const solData = await solRes.json();
-
-          if (solData.symbol) {
-            const info = `
-鏈別：Solana
-代幣名稱：${solData.name} (${solData.symbol})
-總供應量：${solData.supply}
-Decimal：${solData.decimals}
-來源：Solscan`;
-            resultDiv.innerHTML = info;
-            return;
-          }
-        } catch (err) {
-          console.error('Solana查詢失敗', err);
-        }
-      }
-
-      // 無法辨識
-      resultDiv.innerHTML = '無法查詢到此地址的代幣資訊，請檢查格式或換其他代幣地址試試看。';
+      // 暫時放空，下一步我會補 API 與查詢邏輯
+      setTimeout(() => {
+        result.innerHTML = `<p>🔧 這裡將顯示代幣資料（價格、市值、Logo、LP 鎖倉...）</p>`;
+      }, 1000);
     }
   </script>
 </body>
