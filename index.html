@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+TYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
@@ -94,55 +94,64 @@
   </div>
 
  <script>
-async function scanToken() {
-  const address = document.getElementById("tokenInput").value.trim();
-  const chain = document.getElementById("chainSelect").value;
-  const result = document.getElementById("result");
+const apiUrl = `https://api.dexscreener.com/latest/dex/tokens/${input}`;
+const bscApiKey = 'ZTTV2FPNSM1YT6V3IJT56MW73Y2243ANAQ'; // << 把這裡改成你自己的 API key
 
-  if (!address) {
-    result.innerHTML = "❌ 請輸入代幣地址";
+try {
+  const res = await fetch(apiUrl);
+  const data = await res.json();
+
+  if (!data.pairs || data.pairs.length === 0) {
+    result.innerHTML = "❌ 查無代幣資料，請確認地址是否正確";
     return;
   }
 
-  result.innerHTML = "⏳ 查詢中...";
+  const token = data.pairs[0];
 
-  try {
-    // 自動組出查詢網址（用 DexScreener）
-    const url = `https://api.dexscreener.com/latest/dex/search/?q=${address}`;
-    const res = await fetch(url);
-    const data = await res.json();
+  // 模擬風險評分
+  const riskScore = (Math.random() * 2 + 3).toFixed(1);
 
-    if (!data || !data.pairs || data.pairs.length === 0) {
-      result.innerHTML = "❌ 查無代幣資料，請確認地址是否正確或已上架 DEX";
-      return;
-    }
+  // 模擬 LP 是否鎖倉（實戰可接 TeamFinance 等 API）
+  const lpLocked = Math.random() > 0.5;
 
-    const token = data.pairs[0];
+  // 顯示基本資料（包含社群與持有人）
+  result.innerHTML = `
+    <div>
+      <img src="${token.baseToken.imageUrl || ''}" alt="Logo" width="40" height="40" />
+      <strong>${token.baseToken.name} (${token.baseToken.symbol})</strong>
+    </div>
+    <p>💰 價格：<strong>$${token.priceUsd}</strong></p>
+    <p>📊 市值：約 <strong>$${token.liquidity.usd}</strong></p>
+    <p>🔒 LP 是否鎖倉：<strong style="color:${lpLocked ? 'green' : 'red'}">${lpLocked ? '已鎖' : '未鎖'}</strong></p>
+    <p>🧠 風險評分（模擬）：<strong>${riskScore} / 5</strong></p>
 
-    // 模擬風險評分（未來可以整合合約分析 API）
-    const riskScore = (Math.random() * 2 + 3).toFixed(1); // 3.0～5.0
+    <p>🐋 Top 10 持有人：</p>
+    <ul id="holders-list"><li>載入中...</li></ul>
 
-    // 模擬 LP 鎖倉（未來可整合 Team.Finance、Unicrypt 等查詢）
-    const lpLocked = Math.random() > 0.5;
+    <p>🌐 社群連結：</p>
+    <ul>
+      <li>官網：<a href="${token.baseToken.website || '#'}" target="_blank">${token.baseToken.website || '未知'}</a></li>
+      <li>Twitter：<a href="${token.baseToken.twitter || '#'}" target="_blank">${token.baseToken.twitter || '未知'}</a></li>
+      <li>Telegram：<a href="${token.baseToken.telegram || '#'}" target="_blank">${token.baseToken.telegram || '未知'}</a></li>
+    </ul>
+    <p style="font-size:0.85rem; color:#888;">來自 DexScreener 與 BscScan 資料</p>
+  `;
 
-    // 顯示結果
-    result.innerHTML = `
-      <div>
-        <img src="${token.baseToken.imageUrl || ''}" class="token-logo"/>
-        <strong>${token.baseToken.name} (${token.baseToken.symbol})</strong>
-      </div>
-      <p>💰 價格：<strong>$${token.priceUsd}</strong></p>
-      <p>📊 市值：約 <strong>${token.liquidity.usd ? "$" + Number(token.liquidity.usd).toLocaleString() : "不明"}</strong></p>
-      <p>🔐 LP 是否鎖倉：<strong style="color:${lpLocked ? 'lightgreen' : 'red'}">${lpLocked ? '已鎖' : '未鎖'}</strong></p>
-      <p>🧠 風險評分（模擬）：<strong>${riskScore} / 5</strong></p>
-      <p>🐳 Top 10 持有人：<em>（尚未整合）</em></p>
-      <p>🌐 社群連結：<em>（尚未偵測）</em></p>
-      <p style="font-size:0.85rem; color:#888;">來自 DexScreener 資料，僅供參考。</p>
-    `;
-  } catch (e) {
-    console.error(e);
-    result.innerHTML = "⚠️ 查詢失敗，請稍後再試";
-  }
+  // 抓取 Top 10 持有人（BscScan API）
+  const contract = token.baseToken.address;
+  const holderRes = await fetch(`https://api.bscscan.com/api?module=token&action=tokenholderlist&contractaddress=${contract}&apikey=${bscApiKey}`);
+  const holderData = await holderRes.json();
+
+  const list = holderData.result?.slice(0, 10) || [];
+  const holderHtml = list.map((item, i) =>
+    `<li>#${i + 1} ${item.Address.slice(0, 8)}... 持有量：${Number(item.TokenHolderQuantity).toLocaleString()}</li>`
+  ).join('');
+
+  document.getElementById('holders-list').innerHTML = holderHtml || '<li>查無資料</li>';
+
+} catch (e) {
+  console.error(e);
+  result.innerHTML = "⚠️ 查詢失敗，請稍後再試";
 }
 </script>
 </body>
