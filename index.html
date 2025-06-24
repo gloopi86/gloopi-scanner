@@ -95,16 +95,15 @@
 
   <script>
     async function scanToken() {
-      const address = document.getElementById("tokenInput").value.trim();
-      const chain = document.getElementById("chainSelect").value;
-      const result = document.getElementById("result");
-      result.innerHTML = "⏳ 查詢中...";
-
-      // 暫時放空，下一步我會補 API 與查詢邏輯
-      setTimeout(() => {
-        result.innerHTML = `<p>🔧 這裡將顯示代幣資料（價格、市值、Logo、LP 鎖倉...）</p>`;
-      }, 1000);
-    }
+  const address = document.getElementById('tokenInput').value;
+  const chain = document.getElementById('chainSelect').value;
+  const result = document.getElementById('result');
+  result.innerHTML = "⏳ 查詢中...";
+  // 暫時放空，下一步我會補 API 與查詢邏輯
+  setTimeout(() => {
+    result.innerHTML = `<p>🛠️ 這裡將顯示代幣資訊</p>`;
+  }, 1000);
+}
   </script>
 </body>
 </html>
