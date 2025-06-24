@@ -6,56 +6,49 @@
   <title>Gloopi 全鏈代幣掃描器</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
       background-color: #111827;
-      color: #fff;
-      margin: 0;
+      color: white;
+      font-family: Arial, sans-serif;
       padding: 2rem;
     }
     .scanner-box {
-      max-width: 600px;
-      margin: auto;
       background-color: #1f2937;
       padding: 2rem;
+      max-width: 500px;
+      margin: auto;
       border-radius: 1rem;
     }
     input, select, button {
-      padding: 0.5rem;
-      font-size: 1rem;
-      margin-top: 0.5rem;
       width: 100%;
-      border: none;
-      border-radius: 0.25rem;
-    }
-    button {
-      background-color: #10b981;
-      color: white;
-      cursor: pointer;
+      margin-top: 1rem;
+      padding: 0.8rem;
+      font-size: 1rem;
     }
     img {
-      height: 32px;
+      height: 30px;
       vertical-align: middle;
+      margin-right: 0.5rem;
     }
   </style>
 </head>
 <body>
   <div class="scanner-box">
     <h2>🔍 Gloopi 全鏈代幣掃描器</h2>
-    <input id="tokenAddress" placeholder="輸入代幣合約地址" />
+    <input type="text" id="address" placeholder="輸入合約地址" />
     <select id="chain">
-      <option value="eth">Ethereum</option>
-      <option value="bsc">BSC</option>
-      <option value="sol">Solana</option>
+      <option value="eth">ETH</option>
+      <option value="bsc" selected>BSC</option>
+      <option value="sol">SOL</option>
       <option value="base">Base</option>
       <option value="arb">Arbitrum</option>
     </select>
     <button onclick="scanToken()">查詢代幣</button>
-    <div id="result"></div>
+    <div id="result" style="margin-top:1.5rem;"></div>
   </div>
 
   <script>
     async function scanToken() {
-      const address = document.getElementById('tokenAddress').value.trim();
+      const address = document.getElementById('address').value.trim();
       const chain = document.getElementById('chain').value;
       const result = document.getElementById('result');
 
@@ -64,41 +57,41 @@
         return;
       }
 
-      result.innerHTML = "⏳ 查詢中...";
+      result.innerHTML = "⌛ 查詢中...";
 
       try {
         const url = `https://api.dexscreener.com/latest/dex/pairs/${chain}/${address}`;
         const res = await fetch(url);
         const data = await res.json();
+
+        if (!data.pairs || !data.pairs.length) {
+          result.innerHTML = "❌ 查無代幣資料，請確認地址是否正確";
+          return;
+        }
+
         const token = data.pairs[0];
 
-        const riskScore = (Math.random() * 2 + 3).toFixed(1);
+        // 模擬數據
         const lpLocked = Math.random() > 0.5;
-
-        // 取得 BscScan Top 10 持有人
-        const bscApiKey = 'ZTTV2FPNSM1YT6V3IJT56MW73Y2243AM'; // 你的 API Key
-        const holdersRes = await fetch(`https://api.bscscan.com/api?module=token&action=tokenholderlist&contractaddress=${address}&apikey=${bscApiKey}`);
-        const holdersData = await holdersRes.json();
-
-        const holders = holdersData.result?.slice(0, 10) || [];
+        const riskScore = (Math.random() * 2 + 3).toFixed(2); // 模擬 3~5 分
 
         result.innerHTML = `
           <div>
             <img src="${token.baseToken.imageUrl || ''}" />
-            <strong>${token.baseToken.name} (${token.baseToken.symbol})</strong>
+            <strong>${token.baseToken.name}</strong> (${token.baseToken.symbol})
           </div>
-          <p>💰 價格：<strong>$${token.priceUsd}</strong></p>
+          <p>💲 價格: <strong>$${token.priceUsd}</strong></p>
           <p>📊 市值：約 <strong>$${token.liquidity.usd}</strong></p>
           <p>🔒 LP 是否鎖倉：<strong style="color:${lpLocked ? 'lightgreen' : 'red'}">${lpLocked ? '是' : '否'}</strong></p>
-          <p>🧠 風險評分（模擬）：<strong>${riskScore} / 5</strong></p>
-          <p>🐋 Top 10 持有人：</p>
-          <ul>${holders.length === 0 ? '<li>尚未查得</li>' : holders.map(h => `<li>${h.TokenHolderAddress} - ${h.TokenHolderQuantity}</li>`).join('')}</ul>
+          <p>🧠 風險評分（模擬）：<strong>${riskScore} / 5.0</strong></p>
+          <p>🐋 Top 10 持有人：<em>（尚未整合）</em></p>
           <p>🌐 社群連結：</p>
           <ul>
-            <li>官網：<a href="${token.baseToken.websiteUrl || '#'}" target="_blank">${token.baseToken.websiteUrl || '無'}</a></li>
-            <li>Twitter：<a href="${token.baseToken.twitterUrl || '#'}" target="_blank">${token.baseToken.twitterUrl || '無'}</a></li>
-            <li>Telegram：<a href="${token.baseToken.telegramUrl || '#'}" target="_blank">${token.baseToken.telegramUrl || '無'}</a></li>
+            <li>官網：<a href="${token.baseToken.website || '#'}" target="_blank">${token.baseToken.website || '尚未偵測'}</a></li>
+            <li>Twitter：<a href="${token.baseToken.twitter || '#'}" target="_blank">${token.baseToken.twitter || '尚未偵測'}</a></li>
+            <li>Telegram：<a href="${token.baseToken.telegram || '#'}" target="_blank">${token.baseToken.telegram || '尚未偵測'}</a></li>
           </ul>
+          <p style="font-size:0.8rem;color:#aaa;">來自 DexScreener API</p>
         `;
       } catch (e) {
         console.error(e);
