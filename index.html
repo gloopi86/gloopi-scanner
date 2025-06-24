@@ -1,85 +1,70 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Gloopi 全鏈代幣掃描器</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #111827;
-      color: #fff;
+      font-family: "Arial", sans-serif;
+      background: #0e1629;
+      color: #ffffff;
       margin: 0;
       padding: 2rem;
     }
-
-    .scanner-box {
-      max-width: 500px;
+    .container {
+      max-width: 600px;
       margin: auto;
-      background-color: #1f2937;
+      background: #1e2a47;
       padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 0 10px #00000050;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
-
     h1 {
-      color: #93c5fd;
       font-size: 1.5rem;
+      color: #7dc4ff;
       margin-bottom: 1rem;
     }
-
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-size: 0.95rem;
-    }
-
-    input[type="text"], select {
+    input, select, button {
       width: 100%;
       padding: 0.6rem;
       margin-bottom: 1rem;
-      border-radius: 6px;
+      border-radius: 8px;
       border: none;
-      background-color: #374151;
-      color: #fff;
-    }
-
-    button {
-      width: 100%;
-      padding: 0.7rem;
-      background-color: #6366f1;
-      border: none;
-      color: white;
       font-size: 1rem;
-      border-radius: 6px;
+    }
+    button {
+      background-color: #6a6cff;
+      color: white;
       cursor: pointer;
     }
-
     #result {
-      margin-top: 2rem;
-      background: #1e293b;
+      background: #101c33;
       padding: 1rem;
-      border-radius: 6px;
-      color: #d1d5db;
+      border-radius: 8px;
+      margin-top: 1rem;
+      white-space: pre-wrap;
     }
-
     img.token-logo {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
+      width: 32px;
+      height: 32px;
       vertical-align: middle;
-      margin-right: 10px;
+      margin-right: 8px;
+    }
+    .label {
+      font-weight: bold;
+      margin-top: 0.5rem;
+    }
+    a {
+      color: #72baff;
     }
   </style>
 </head>
 <body>
-  <div class="scanner-box">
+  <div class="container">
     <h1>🔍 Gloopi 全鏈代幣掃描器</h1>
-    <label for="token">代幣地址：</label>
-    <input type="text" id="tokenInput" placeholder="輸入合約地址或 Solana 地址" />
-
-    <label for="chain">選擇鏈：</label>
-    <select id="chainSelect">
+    <input id="address" placeholder="輸入合約地址或 Solana 錢包地址" />
+    <select id="chain">
       <option value="">自動偵測</option>
       <option value="eth">Ethereum</option>
       <option value="bsc">BSC</option>
@@ -87,23 +72,73 @@
       <option value="base">Base</option>
       <option value="arb">Arbitrum</option>
     </select>
-
     <button onclick="scanToken()">查詢代幣</button>
-
-    <div id="result"></div>
+    <div id="result">🔧 等待查詢...</div>
   </div>
 
   <script>
     async function scanToken() {
-  const address = document.getElementById('tokenInput').value;
-  const chain = document.getElementById('chainSelect').value;
-  const result = document.getElementById('result');
-  result.innerHTML = "⏳ 查詢中...";
-  // 暫時放空，下一步我會補 API 與查詢邏輯
-  setTimeout(() => {
-    result.innerHTML = `<p>🛠️ 這裡將顯示代幣資訊</p>`;
-  }, 1000);
-}
+      const address = document.getElementById("address").value.trim();
+      const chain = document.getElementById("chain").value;
+      const result = document.getElementById("result");
+      result.innerHTML = "⏳ 查詢中...";
+
+      try {
+        const res = await fetch(`https://gloopi-api.vercel.app/api/token-info?address=${address}&chain=${chain}`);
+        const data = await res.json();
+
+        if (!data || data.error) {
+          result.innerHTML = "❌ 無法找到代幣資訊。";
+          return;
+        }
+
+        const {
+          name,
+          symbol,
+          price,
+          marketCap,
+          logo,
+          chain: chainDetected,
+          liquidityLock,
+          topHolders,
+          riskScore,
+          social
+        } = data;
+
+        let html = "";
+
+        if (logo) {
+          html += `<img class="token-logo" src="${logo}" alt="logo"/>`;
+        }
+
+        html += `<strong>${name || "未知"} (${symbol || "?"})</strong><br>`;
+        html += `<div class="label">鏈別：</div>${chainDetected || "自動偵測"}<br>`;
+        html += `<div class="label">價格：</div>${price || "未知"}<br>`;
+        html += `<div class="label">市值：</div>${marketCap || "未知"}<br>`;
+        html += `<div class="label">LP 鎖倉狀況：</div>${liquidityLock || "未知"}<br>`;
+        html += `<div class="label">風險評分：</div>${riskScore || "未計算"} / 100<br>`;
+
+        if (topHolders && topHolders.length > 0) {
+          html += `<div class="label">Top 10 持有人：</div><ul>`;
+          topHolders.forEach(h => {
+            html += `<li>${h.address.slice(0, 6)}...${h.address.slice(-4)} - ${h.percentage}%</li>`;
+          });
+          html += `</ul>`;
+        }
+
+        if (social) {
+          html += `<div class="label">社群連結：</div>`;
+          if (social.telegram) html += `📢 <a href="${social.telegram}" target="_blank">Telegram</a><br>`;
+          if (social.twitter) html += `🐦 <a href="${social.twitter}" target="_blank">Twitter</a><br>`;
+        }
+
+        result.innerHTML = html;
+
+      } catch (err) {
+        console.error(err);
+        result.innerHTML = "🚫 發生錯誤，請稍後再試。";
+      }
+    }
   </script>
 </body>
 </html>
