@@ -1,11 +1,42 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <title>Gloopi Scanner</title>
-  </head>
-  <body>
-    <h1>Hello, Gloopi is online!</h1>
-    <p>This is the beginning of your scanner project.</p>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <title>Gloopi Scanner</title>
+</head>
+<body>
+  <h1>Gloopi Token Scanner</h1>
+  <input type="text" id="addressInput" placeholder="輸入合約地址">
+  <button onclick="searchToken()">查詢</button>
+  <div id="result"></div>
+
+  <script>
+    async function searchToken() {
+      const address = document.getElementById("addressInput").value.trim();
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = "查詢中...";
+
+      try {
+        const response = await fetch(`https://api.dexscreener.com/latest/dex/search/?q=${address}`);
+        const data = await response.json();
+
+        if (!data.pairs || data.pairs.length === 0) {
+          resultDiv.innerHTML = "找不到相關資料。";
+          return;
+        }
+
+        const token = data.pairs[0];
+        resultDiv.innerHTML = `
+          <p><strong>名稱：</strong>${token.baseToken.name} (${token.baseToken.symbol})</p>
+          <p><strong>價格：</strong>$${token.priceUsd}</p>
+          <p><strong>市值：</strong>${token.liquidity.usd ? `$${Number(token.liquidity.usd).toLocaleString()}` : "未知"}</p>
+          <p><strong>來源DEX：</strong>${token.dexId}</p>
+        `;
+      } catch (error) {
+        console.error(error);
+        resultDiv.innerHTML = "查詢失敗，請稍後再試。";
+      }
+    }
+  </script>
+</body>
 </html>
